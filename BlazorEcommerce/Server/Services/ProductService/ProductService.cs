@@ -57,5 +57,53 @@ namespace BlazorEcommerce.Server.Services.ProductService
             }
             return response;
         }
+
+        public async Task<ServiceResponse<List<string>>> GetProductSearchSuggestions(string searchText)
+        {
+            var products = await FindProductsBySearchText(searchText);
+            List<string> result = new List<string>();
+
+            foreach(var product in products)
+            {
+                if(product.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Add(product.Title);
+                }
+
+                if(product.Description != null)
+                {
+                    var punctuation = product.Description.Where(char.IsPunctuation)
+                        .Distinct().ToArray();
+                    var words = product.Description.Split()
+                        .Select(s => s.Trim(punctuation));
+                    foreach (var word in words)
+                    {
+                        if(word.Contains(searchText, StringComparison.OrdinalIgnoreCase) && !result.Contains(word))
+                        {
+                            result.Add(word);
+                        }
+                    }
+                }
+            }
+
+            return new ServiceResponse<List<string>> { Data = result };
+        }
+
+        public async Task<ServiceResponse<List<Product>>> SearchProductsAsync(string searchText)
+        {
+            var response = new ServiceResponse<List<Product>>();
+            List<Product> products = await FindProductsBySearchText(searchText);
+            response.Data = products;
+
+            return response;
+        }
+
+        private async Task<List<Product>> FindProductsBySearchText(string searchText)
+        {
+            return await _context.Products
+                .Where(x => x.Title.ToLower().Contains(searchText) || x.Description.ToLower().Contains(searchText))
+                .Include(p => p.Variants)
+                .ToListAsync();
+        }
     }
 }
