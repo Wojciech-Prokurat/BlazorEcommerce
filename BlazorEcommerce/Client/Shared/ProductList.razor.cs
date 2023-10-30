@@ -2,9 +2,14 @@
 {
     public partial class ProductList
     {
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
-            await productService.GetProducts();
+            productService.ProductsChanged += StateHasChanged;
+        }
+
+        public void Dispose()
+        {
+            productService.ProductsChanged -= StateHasChanged;
         }
     }
 }

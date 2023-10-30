@@ -1,5 +1,5 @@
 ﻿@inject IProductService productService;
-
+@implements IDisposable
 
 @if(productService.Products == null || productService.Products.Count == 0)
 {
